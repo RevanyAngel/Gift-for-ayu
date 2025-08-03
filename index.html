@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sebuah Buku Kenangan</title>
+    
+    <!-- Memuat Tailwind CSS untuk styling yang responsif dan modern -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Memuat Google Fonts untuk tampilan yang lebih personal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Mengatur font kustom dari Google Fonts */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
+            /* Menggunakan Grid untuk memastikan penempatan di tengah yang sempurna */
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            perspective: 2500px; /* Menciptakan ruang 3D untuk efek balik halaman */
+            padding: 1rem;
+        }
+
+        .book-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem; /* Jarak antara buku dan tombol navigasi */
+        }
+
+        .book {
+            width: 90vw;
+            height: 70vh;
+            max-width: 800px;
+            max-height: 600px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .page-content {
+            padding: 1rem;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        /* Styling untuk halaman individual (kanan dan kiri) */
+        .paper {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            top: 0;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 1s cubic-bezier(0.65, 0, 0.35, 1); /* Transisi untuk animasi balik halaman */
+            transform-style: preserve-3d;
+        }
+
+        .paper.left {
+            left: 0;
+            border-top-left-radius: 0.75rem;
+            border-bottom-left-radius: 0.75rem;
+            transform-origin: right center; /* Titik putar animasi dari tengah-kanan */
+        }
+
+        .paper.right {
+            right: 0;
+            border-top-right-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            transform-origin: left center; /* Titik putar animasi dari tengah-kiri */
+        }
+
+        /* Kelas 'flipped' akan ditambahkan oleh JavaScript untuk membalik halaman */
+        .paper.flipped {
+            transform: rotateY(-180deg);
+        }
+
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden; /* Sembunyikan sisi belakang saat animasi */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .back {
+            transform: rotateY(180deg); /* Balik sisi belakang secara default */
+        }
+
+        /* Font khusus untuk judul cover */
+        .font-cover-title {
+            font-family: 'Pacifico', cursive;
+        }
+
+        /* Styling untuk cover depan */
+        .cover-front {
+            background: linear-gradient(45deg, #868f96 0%, #596164 100%);
+            color: white;
+        }
+        
+        /* Styling untuk cover belakang */
+        .cover-back {
+            background: linear-gradient(45deg, #596164 0%, #868f96 100%);
+        }
+
+        /* Styling tombol navigasi */
+        .nav-button {
+            background-color: #4a5568; /* gray-700 */
+            color: white;
+            border-radius: 9999px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .nav-button:hover {
+            background-color: #2d3748; /* gray-800 */
+        }
+        .nav-button:active {
+            transform: scale(0.95);
+        }
+        .nav-button:disabled {
+            background-color: #a0aec0; /* gray-400 */
+            cursor: not-allowed;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="book-container">
+        <!-- Buku akan diisi oleh JavaScript -->
+        <div id="book" class="book"></div>
+
+        <!-- Tombol Navigasi -->
+        <div class="flex space-x-4 mt-4">
+            <button id="prev-btn" class="nav-button" aria-label="Halaman Sebelumnya">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button id="next-btn" class="nav-button" aria-label="Halaman Selanjutnya">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ===================================================================================
+        // --- AREA KUSTOMISASI KONTEN ---
+        // Ganti teks, tanggal, dan link gambar di bawah ini sesuai dengan kenangan Anda.
+        // Anda bisa menambah atau mengurangi jumlah objek di dalam array `bookData`.
+        // Untuk gambar, gunakan link langsung. Anda bisa upload foto ke imgbb.com atau sejenisnya.
+        // ===================================================================================
+        const bookData = [
+            // HALAMAN 1: COVER DEPAN
+            {
+                type: 'cover-front',
+                content: {
+                    title: "hayo tebak isinya apa",
+                    recipient: "FOR the only one AYU NAVISATUS SANIYAH sang pencetus nama rere", // <-- Ganti dengan nama temanmu
+                    message: "BY rere yg dikasi panggilan tsb"
+                }
+            },
+            // HALAMAN 2 & 3
+            {
+                type: 'page',
+                left: {
+                    title: "HAPPIEST 21th BIRTHDAY AYU!!!",
+                    date: "4 Agustus 2025",
+                    // imageUrl: "https://placehold.co/600x400/a7c7e7/ffffff?text=Foto+Pertama+Kita",
+                    story: "Masih ingat hari ini? Hari di mana kita pertama kali bertemu di acara tujuhbelasan komplek. Kamu pakai baju merah putih, dan aku nggak sengaja numpahin es teh ke bajumu. Maaf ya! Tapi dari situlah cerita kita dimulai. Siapa sangka kita bakal jadi sedekat ini?"
+                },
+                right: {
+                    title: "Petualangan di Gunung",
+                    date: "12 Juni 2019",
+                    imageUrl: "https://raw.githubusercontent.com/RevanyAngel/foto/main/1.jpg",
+                    story: "Mendaki pertama kali bareng kamu itu nekat sekaligus seru banget. Kita hampir nyerah di tengah jalan, tapi saling semangatin sampai akhirnya bisa lihat sunrise dari puncak. Pemandangannya indah, tapi momen kebersamaannya jauh lebih berharga."
+                }
+            },
+            // HALAMAN 4 & 5
+            {
+                type: 'page',
+                left: {
+                    title: "Wisuda & Perayaan",
+                    date: "20 Oktober 2021",
+                    imageUrl: "https://placehold.co/600x400/b39eb5/ffffff?text=Foto+Wisuda+Bareng",
+                    story: "Momen paling membanggakan! Setelah begadang bareng, revisi skripsi sampai pagi, akhirnya kita bisa pakai toga ini. Terima kasih sudah jadi support system terbaik selama masa-masa kuliah yang penuh drama. Kita berhasil!"
+                },
+                right: {
+                    title: "Konser Musik Impian",
+                    date: "5 Maret 2022",
+                    imageUrl: "https://placehold.co/600x400/87a96b/ffffff?text=Foto+Nonton+Konser",
+                    story: "Nabung berbulan-bulan demi bisa nonton band favorit kita. Nyanyi bareng sampai suara habis, loncat-loncat sampai kaki pegal. Salah satu malam terbaik dalam hidupku, dan itu semua karena aku melewatinya bersamamu. Kapan kita nonton konser lagi?"
+                }
+            },
+            // HALAMAN 6: COVER BELAKANG
+            {
+                type: 'cover-back',
+                content: {
+                    closing: "Dari Sahabatmu,",
+                    sender: "Nama Kamu" // <-- Ganti dengan nama kamu
+                }
+            }
+        ];
+        // ===================================================================================
+        // --- AKHIR AREA KUSTOMISASI ---
+        // ===================================================================================
+
+
+        // --- LOGIKA APLIKASI (Perubahan di bawah) ---
+        const book = document.getElementById('book');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        let currentLocation = 0;
+        let numOfPapers = 0;
+        let papers = [];
+
+        function renderBook() {
+            numOfPapers = Math.ceil((bookData.length - 2) / 1) + 2; // Cover + Pages + Back Cover
+            
+            // Generate Cover Depan
+            const coverData = bookData[0];
+            const coverPaper = document.createElement('div');
+            coverPaper.classList.add('paper', 'right');
+            coverPaper.style.zIndex = numOfPapers + 1;
+            coverPaper.innerHTML = `
+                <div class="front cover-front p-6 flex flex-col justify-center items-center text-center">
+                    <h1 class="font-cover-title text-4xl md:text-6xl">${coverData.content.title}</h1>
+                    <p class="text-2xl md:text-xl mt-4">${coverData.content.recipient}</p>
+                    <p class="mt-8 text-sm md:text-base">${coverData.content.message}</p>
+                </div>
+                <div class="back p-6">
+                    ${bookData[1] && bookData[1].type === 'page' ? createPageContent(bookData[1].left) : ''}
+                </div>
+            `;
+            book.appendChild(coverPaper);
+            papers.push(coverPaper);
+
+            // Generate Halaman Tengah
+            for (let i = 1; i < bookData.length - 1; i++) {
+                const pageData = bookData[i];
+                const paper = document.createElement('div');
+                paper.classList.add('paper', 'right');
+                paper.style.zIndex = numOfPapers - i;
+                paper.innerHTML = `
+                    <div class="front p-4 md:p-8 overflow-y-auto">
+                        ${createPageContent(pageData.right)}
+                    </div>
+                    <div class="back p-4 md:p-8 overflow-y-auto">
+                        ${
+                            // Cek apakah data berikutnya adalah 'cover-back'
+                            bookData[i+1] && bookData[i+1].type === 'cover-back'
+                            // Jika ya, tampilkan pesan penutup di halaman kiri
+                            ? ` <div class="page-content flex flex-col h-full text-center justify-center items-center">
+                                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">Sampai Jumpa di Petualangan Berikutnya!</h2>
+                                    <p class="text-sm md:text-base text-gray-700 mt-4 max-w-md">
+                                        Terima kasih untuk semua tawa dan cerita. Perjalanan kita belum berakhir, ini baru permulaan!
+                                    </p>
+                                    <p class="font-cover-title text-4xl mt-8">❤️</p>
+                                </div>`
+                            // Jika tidak, gunakan logika yang lama
+                            : (bookData[i+1] && bookData[i+1].type === 'page' ? createPageContent(bookData[i+1].left) : '')
+                        }
+                    </div>
+                `;
+                book.appendChild(paper);
+                papers.push(paper);
+            }
+
+            // Generate Cover Belakang
+            const backCoverData = bookData[bookData.length - 1];
+            const backCoverPaper = document.createElement('div');
+            backCoverPaper.classList.add('paper', 'right');
+            backCoverPaper.style.zIndex = 1;
+            backCoverPaper.innerHTML = `
+                <div class="front p-6">
+                    
+                </div>
+                <div class="back cover-back p-6 flex flex-col justify-center items-center text-center text-white">
+                    <h2 class="font-cover-title text-3xl md:text-5xl">${backCoverData.content.closing}</h2>
+                    <p class="text-xl md:text-3xl mt-4">${backCoverData.content.sender}</p>
+                </div>
+            `;
+            book.appendChild(backCoverPaper);
+            // Tidak perlu dimasukkan ke 'papers' karena tidak bisa dibalik
+        }
+
+        function createPageContent(data) {
+            if (!data) return '';
+            return `
+                <div class="page-content flex flex-col h-full">
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">${data.title}</h2>
+                    <p class="text-sm text-gray-500 mb-4">${data.date}</p>
+                    
+                    ${
+                        // Hanya tampilkan blok gambar jika data.imageUrl ada
+                        data.imageUrl
+                        ? `
+                            <img src="${data.imageUrl}" alt="${data.title}" class="w-full h-auto my-4 rounded-lg shadow-md" style="max-height: 350px;" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Gagal+Memuat+Gambar';">
+                        `
+                        : '' // Jika tidak ada, jangan tampilkan apa-apa
+                    }
+
+                    <p class="text-sm md:text-base text-gray-700 mt-4 flex-shrink-0">${data.story}</p>
+                </div>
+            `;
+        }
+
+        // --- PERUBAHAN ---
+        // Fungsi ini tidak lagi menggeser buku (menghapus transform) agar tetap di tengah.
+        function openBook() {
+            // book.style.transform = "translateX(50%)"; // Baris ini dihapus
+            // Animasi tombol bisa tetap ada untuk efek visual
+            prevBtn.style.transform = "translateX(-180px)";
+            nextBtn.style.transform = "translateX(180px)";
+        }
+
+        // --- PERUBAHAN ---
+        // Fungsi ini juga disesuaikan untuk tidak mengubah posisi buku.
+        function closeBook(isAtBeginning) {
+            // Transformasi pada buku dihapus untuk konsistensi
+            // if(isAtBeginning) {
+            //     book.style.transform = "translateX(0%)";
+            // } else {
+            //     book.style.transform = "translateX(100%)";
+            // }
+            
+            // Mengembalikan posisi tombol ke semula
+            prevBtn.style.transform = "translateX(0px)";
+            nextBtn.style.transform = "translateX(0px)";
+        }
+
+        function goNextPage() {
+            if(currentLocation < papers.length) {
+                if(currentLocation === 0) {
+                    openBook();
+                }
+                papers[currentLocation].classList.add("flipped");
+                papers[currentLocation].style.zIndex = currentLocation + 2;
+                currentLocation++;
+                updateButtons();
+            }
+        }
+
+        function goPrevPage() {
+            if(currentLocation > 0) {
+                currentLocation--;
+                papers[currentLocation].classList.remove("flipped");
+                papers[currentLocation].style.zIndex = numOfPapers - currentLocation;
+                if(currentLocation === 0) {
+                    closeBook(true);
+                }
+                updateButtons();
+            }
+        }
+        
+        function updateButtons() {
+            prevBtn.disabled = currentLocation <= 0;
+            nextBtn.disabled = currentLocation >= papers.length;
+        }
+
+        // Event Listeners
+        prevBtn.addEventListener("click", goPrevPage);
+        nextBtn.addEventListener("click", goNextPage);
+
+        // Inisialisasi
+        renderBook();
+        updateButtons();
+
+    </script>
+</body>
+</html>
