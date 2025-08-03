@@ -29,9 +29,12 @@
 
         .book-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row; /* <-- Ubah ke 'row' */
             align-items: center;
-            gap: 1rem; /* Jarak antara buku dan tombol navigasi */
+            gap: 1rem;
+            position: relative; /* <-- Tambahkan ini */
+            width: 100%;
+            justify-content: center; /* Pastikan buku tetap di tengah */
         }
 
         .book {
@@ -136,6 +139,10 @@
             align-items: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: background-color 0.3s, transform 0.2s;
+            position: absolute; /* Angkat tombol dari alur normal */
+            top: 50%; /* Posisikan dari atas sejauh 50% dari tinggi container */
+            transform: translateY(-50%); /* Geser ke atas 50% dari TINGGI TOMBOL ITU SENDIRI */
+            z-index: 200; /* Pastikan tombol selalu di atas halaman buku */
         }
         .nav-button:hover {
             background-color: #2d3748; /* gray-800 */
@@ -146,6 +153,14 @@
         .nav-button:disabled {
             background-color: #a0aec0; /* gray-400 */
             cursor: not-allowed;
+        }
+
+        #prev-btn {
+            left: 5%; /* Jarak 5% dari tepi kiri container */
+        }
+
+        #next-btn {
+            right: 5%; /* Jarak 5% dari tepi kanan container */
         }
 
         @media (max-width: 768px) {
@@ -185,7 +200,6 @@
         <div id="book" class="book"></div>
 
         <!-- Tombol Navigasi -->
-        <div class="flex space-x-4 mt-4">
             <button id="prev-btn" class="nav-button" aria-label="Halaman Sebelumnya">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -196,7 +210,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
             </button>
-        </div>
     </div>
 
     <script>
@@ -350,25 +363,16 @@
         // --- PERUBAHAN ---
         // Fungsi ini tidak lagi menggeser buku (menghapus transform) agar tetap di tengah.
         function openBook() {
-            // book.style.transform = "translateX(50%)"; // Baris ini dihapus
-            // Animasi tombol bisa tetap ada untuk efek visual
-            prevBtn.style.transform = "translateX(-180px)";
-            nextBtn.style.transform = "translateX(180px)";
+            // Gabungkan transform yang sudah ada dengan yang baru
+            prevBtn.style.transform = "translateY(-50%) translateX(-20px)";
+            nextBtn.style.transform = "translateY(-50%) translateX(20px)";
         }
-
         // --- PERUBAHAN ---
         // Fungsi ini juga disesuaikan untuk tidak mengubah posisi buku.
         function closeBook(isAtBeginning) {
-            // Transformasi pada buku dihapus untuk konsistensi
-            // if(isAtBeginning) {
-            //     book.style.transform = "translateX(0%)";
-            // } else {
-            //     book.style.transform = "translateX(100%)";
-            // }
-            
-            // Mengembalikan posisi tombol ke semula
-            prevBtn.style.transform = "translateX(0px)";
-            nextBtn.style.transform = "translateX(0px)";
+            // Kembalikan hanya ke posisi vertikal tengah
+            prevBtn.style.transform = "translateY(-50%)";
+            nextBtn.style.transform = "translateY(-50%)";
         }
 
         function goNextPage() {
