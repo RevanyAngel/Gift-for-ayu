@@ -36,7 +36,7 @@
 
         .book {
             width: 90vw;
-            aspect-ratio: 1 / 9;
+            aspect-ratio: 3 / 4;
             max-width: 800px;
             max-height: 600px;
             position: relative;
@@ -148,6 +148,34 @@
             cursor: not-allowed;
         }
 
+        @media (max-width: 768px) {
+    /* Semua kode untuk tampilan HP akan kita letakkan di sini */
+        
+        .book {
+            /* Gunakan tinggi layar, bukan rasio aspek lagi */
+            height: 80vh; 
+            width: 90vw;
+            /* Hapus aspect-ratio jika ada di sini, karena kita atur manual */
+            aspect-ratio: unset; 
+        }
+
+        .paper {
+            width: 100%; /* <-- Paling penting: buat halaman jadi 100% lebar buku */
+            left: 0; /* Pastikan semua halaman mulai dari kiri */
+        }
+
+        .front, .back {
+            width: 100%;
+            left: 0;
+        }
+
+        /* Saat halaman dibalik, pastikan sisi belakangnya muncul di atas */
+        .paper.flipped {
+            z-index: 99 !important; 
+        }
+
+        }
+
     </style>
 </head>
 <body>
@@ -179,48 +207,47 @@
         // Untuk gambar, gunakan link langsung. Anda bisa upload foto ke imgbb.com atau sejenisnya.
         // ===================================================================================
         const bookData = [
-            // HALAMAN 1: COVER DEPAN
+    // HALAMAN 1: COVER DEPAN
             {
                 type: 'cover-front',
                 content: {
                     title: "hayo tebak isinya apa",
-                    recipient: "FOR the only one AYU NAVISATUS SANIYAH sang pencetus nama rere", // <-- Ganti dengan nama temanmu
+                    recipient: "FOR the only one AYU NAVISATUS SANIYAH sang pencetus nama rere",
                     message: "BY rere yg dikasi panggilan tsb"
                 }
             },
-            // HALAMAN 2 & 3
+            // HALAMAN 2
             {
                 type: 'page',
-                left: {
+                content: {
                     title: "HAPPIEST 21th BIRTHDAY AYU!!!",
                     date: "4 Agustus 2025",
-                    // imageUrl: "https://placehold.co/600x400/a7c7e7/ffffff?text=Foto+Pertama+Kita",
                     story: "Masih ingat hari ini? Hari di mana kita pertama kali bertemu di acara tujuhbelasan komplek. Kamu pakai baju merah putih, dan aku nggak sengaja numpahin es teh ke bajumu. Maaf ya! Tapi dari situlah cerita kita dimulai. Siapa sangka kita bakal jadi sedekat ini?"
-                },
-                right: {
+                }
+            },
+            // HALAMAN 3
+            {
+                type: 'page',
+                content: {
                     title: "Petualangan di Gunung",
                     date: "12 Juni 2019",
                     imageUrl: "https://raw.githubusercontent.com/RevanyAngel/foto/main/1.jpg",
                     story: "Mendaki pertama kali bareng kamu itu nekat sekaligus seru banget. Kita hampir nyerah di tengah jalan, tapi saling semangatin sampai akhirnya bisa lihat sunrise dari puncak. Pemandangannya indah, tapi momen kebersamaannya jauh lebih berharga."
                 }
             },
-            // HALAMAN 4 & 5
+            // HALAMAN 4
             {
                 type: 'page',
-                left: {
+                content: {
                     title: "Wisuda & Perayaan",
                     date: "20 Oktober 2021",
                     imageUrl: "https://placehold.co/600x400/b39eb5/ffffff?text=Foto+Wisuda+Bareng",
                     story: "Momen paling membanggakan! Setelah begadang bareng, revisi skripsi sampai pagi, akhirnya kita bisa pakai toga ini. Terima kasih sudah jadi support system terbaik selama masa-masa kuliah yang penuh drama. Kita berhasil!"
-                },
-                right: {
-                    title: "Konser Musik Impian",
-                    date: "5 Maret 2022",
-                    imageUrl: "https://placehold.co/600x400/87a96b/ffffff?text=Foto+Nonton+Konser",
-                    story: "Nabung berbulan-bulan demi bisa nonton band favorit kita. Nyanyi bareng sampai suara habis, loncat-loncat sampai kaki pegal. Salah satu malam terbaik dalam hidupku, dan itu semua karena aku melewatinya bersamamu. Kapan kita nonton konser lagi?"
                 }
             },
-            // HALAMAN 6: COVER BELAKANG
+            // ... Tambahkan halaman lain dengan format yang sama ...
+
+            // HALAMAN TERAKHIR: COVER BELAKANG
             {
                 type: 'cover-back',
                 content: {
@@ -243,95 +270,81 @@
         let numOfPapers = 0;
         let papers = [];
 
-        function renderBook() {
-            numOfPapers = Math.ceil((bookData.length - 2) / 1) + 2; // Cover + Pages + Back Cover
-            
-            // Generate Cover Depan
-            const coverData = bookData[0];
-            const coverPaper = document.createElement('div');
-            coverPaper.classList.add('paper', 'right');
-            coverPaper.style.zIndex = numOfPapers + 1;
-            coverPaper.innerHTML = `
-                <div class="front cover-front p-6 flex flex-col justify-center items-center text-center">
-                    <h1 class="font-cover-title text-3xl sm:text-4xl md:text-6xl">${coverData.content.title}</h1>
-                    <p class="text-2xl md:text-xl mt-4">${coverData.content.recipient}</p>
-                    <p class="mt-8 text-sm md:text-base">${coverData.content.message}</p>
-                </div>
-                <div class="back p-6">
-                    ${bookData[1] && bookData[1].type === 'page' ? createPageContent(bookData[1].left) : ''}
-                </div>
-            `;
-            book.appendChild(coverPaper);
-            papers.push(coverPaper);
+        function createPageContent(data) {
+            if (!data || !data.content) return ''; // Penjagaan jika data kosong
 
-            // Generate Halaman Tengah
-            for (let i = 1; i < bookData.length - 1; i++) {
-                const pageData = bookData[i];
-                const paper = document.createElement('div');
-                paper.classList.add('paper', 'right');
-                paper.style.zIndex = numOfPapers - i;
-                paper.innerHTML = `
-                    <div class="front p-4 md:p-8 overflow-y-auto">
-                        ${createPageContent(pageData.right)}
-                    </div>
-                    <div class="back p-4 md:p-8 overflow-y-auto">
+            // Jika ini halaman biasa
+            if (data.type === 'page') {
+                return `
+                    <div class="page-content flex flex-col h-full p-4 md:p-8 overflow-y-auto">
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">${data.content.title}</h2>
+                        <p class="text-sm text-gray-500 mb-4">${data.content.date}</p>
                         ${
-                            // Cek apakah data berikutnya adalah 'cover-back'
-                            bookData[i+1] && bookData[i+1].type === 'cover-back'
-                            // Jika ya, tampilkan pesan penutup di halaman kiri
-                            ? ` <div class="page-content flex flex-col h-full text-center justify-center items-center">
-                                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">Sampai Jumpa di Petualangan Berikutnya!</h2>
-                                    <p class="text-sm md:text-base text-gray-700 mt-4 max-w-md">
-                                        Terima kasih untuk semua tawa dan cerita. Perjalanan kita belum berakhir, ini baru permulaan!
-                                    </p>
-                                    <p class="font-cover-title text-4xl mt-8">❤️</p>
-                                </div>`
-                            // Jika tidak, gunakan logika yang lama
-                            : (bookData[i+1] && bookData[i+1].type === 'page' ? createPageContent(bookData[i+1].left) : '')
+                            data.content.imageUrl
+                            ? `<img src="${data.content.imageUrl}" alt="${data.content.title}" class="w-full object-contain my-4 rounded-lg shadow-md" style="max-height: 50%;">`
+                            : ''
                         }
+                        <p class="text-sm md:text-base text-gray-700 mt-4 flex-shrink-0">${data.content.story}</p>
                     </div>
                 `;
+            }
+            return '';
+        }
+
+        function renderBook() {
+            book.innerHTML = ''; // Kosongkan buku sebelum render
+            papers = []; // Kosongkan array kertas
+
+            for (let i = 0; i < bookData.length; i++) {
+                const paper = document.createElement('div');
+                paper.classList.add('paper', 'right');
+                paper.style.zIndex = bookData.length - i;
+
+                let frontContent = '';
+                let backContent = '';
+
+                // Mengatur konten untuk sisi depan dan belakang
+                const currentData = bookData[i];
+                const nextData = bookData[i + 1];
+
+                if (currentData.type === 'cover-front') {
+                    frontContent = `
+                        <div class="front cover-front p-6 flex flex-col justify-center items-center text-center">
+                            <h1 class="font-cover-title text-4xl md:text-6xl">${currentData.content.title}</h1>
+                            <p class="text-2xl md:text-xl mt-4">${currentData.content.recipient}</p>
+                            <p class="mt-8 text-sm md:text-base">${currentData.content.message}</p>
+                        </div>
+                    `;
+                } else {
+                    frontContent = `<div class="front">${createPageContent(currentData)}</div>`;
+                }
+
+                if (nextData) {
+                    if (nextData.type === 'cover-back') {
+                        backContent = `
+                            <div class="back cover-back p-6 flex flex-col justify-center items-center text-center text-white">
+                                <h2 class="font-cover-title text-3xl md:text-5xl">${nextData.content.closing}</h2>
+                                <p class="text-xl md:text-3xl mt-4">${nextData.content.sender}</p>
+                            </div>
+                        `;
+                    } else {
+                        backContent = `<div class="back">${createPageContent(nextData)}</div>`;
+                    }
+                }
+
+                paper.innerHTML = frontContent + backContent;
                 book.appendChild(paper);
                 papers.push(paper);
             }
-
-            // Generate Cover Belakang
-            const backCoverData = bookData[bookData.length - 1];
-            const backCoverPaper = document.createElement('div');
-            backCoverPaper.classList.add('paper', 'right');
-            backCoverPaper.style.zIndex = 1;
-            backCoverPaper.innerHTML = `
-                <div class="front p-6">
-                    
-                </div>
-                <div class="back cover-back p-6 flex flex-col justify-center items-center text-center text-white">
-                    <h2 class="font-cover-title text-3xl md:text-5xl">${backCoverData.content.closing}</h2>
-                    <p class="text-xl md:text-3xl mt-4">${backCoverData.content.sender}</p>
-                </div>
-            `;
-            book.appendChild(backCoverPaper);
-            // Tidak perlu dimasukkan ke 'papers' karena tidak bisa dibalik
-        }
-
-        function createPageContent(data) {
-            if (!data) return '';
-            return `
-                <div class="page-content flex flex-col h-full">
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">${data.title}</h2>
-                    <p class="text-sm text-gray-500 mb-4">${data.date}</p>
-                    
-                    ${
-                        // Hanya tampilkan blok gambar jika data.imageUrl ada
-                        data.imageUrl
-                        ? `
-                            <img src="${data.imageUrl}" alt="${data.title}" class="w-full h-auto my-4 rounded-lg shadow-md" style="max-height: 55%;" onerror="this.onerror=null;this.src='...';">
-                        `
-                        : '' // Jika tidak ada, jangan tampilkan apa-apa
-                    }
-
-                    <p class="text-sm md:text-base text-gray-700 mt-4 flex-shrink-0">${data.story}</p>
-                </div>
-            `;
+            // Hapus lembar kertas terakhir yang kosong (karena cover belakang sudah jadi sisi 'back')
+            if(papers.length > 0) {
+                const lastPaper = papers[papers.length - 1];
+                // Cek jika halaman terakhir adalah cover-back
+                if (bookData[bookData.length - 1].type === 'cover-back') {
+                    book.removeChild(lastPaper);
+                    papers.pop();
+                }
+            }
         }
 
         // --- PERUBAHAN ---
