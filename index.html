@@ -105,6 +105,7 @@
             backface-visibility: hidden; /* Sembunyikan sisi belakang saat animasi */
             display: flex;
             flex-direction: column;
+            
         }
         
         .back {
@@ -328,7 +329,7 @@
                 }
             },
 
-             // HALAMAN 10   
+             // HALAMAN 11   
             {
                 type: 'page',
                 content: {
@@ -382,7 +383,7 @@
             // Jika ini halaman biasa
             if (data.type === 'page') {
                 return `
-                    <div class="page-content flex flex-col h-full p-4 md:p-8 overflow-y-auto">
+                    <div class="page-content p-4 md:p-8 overflow-y-auto">
                         <h2 class="text-xl md:text-2xl font-bold text-gray-800">${data.content.title}</h2>
                         <p class="text-sm text-gray-500 mb-4">${data.content.date}</p>
                         ${
@@ -390,7 +391,7 @@
                             ? `<img src="${data.content.imageUrl}" alt="${data.content.title}" class="w-full object-contain my-4 rounded-lg shadow-md" style="max-height: 50%;">`
                             : ''
                         }
-                        <p class="text-sm md:text-base text-gray-700 mt-4 flex-shrink-0">${data.content.story}</p>
+                        <p class="text-sm md:text-base text-gray-700 mt-4">${data.content.story}</p>
                     </div>
                 `;
             }
@@ -403,47 +404,40 @@
 
             // [PERBAIKAN] Loop sekarang melompat 2 langkah setiap kali (i += 2)
             // karena kita memproses 2 halaman data untuk 1 kertas virtual.
-            for (let i = 0; i < bookData.length; i += 2) {
+            for (let i = 0; i < bookData.length; i ++) {
                 const paper = document.createElement('div');
                 paper.classList.add('paper', 'right'); 
                 // Z-index dihitung berdasarkan pasangan halaman
-                paper.style.zIndex = (bookData.length / 2) - (i / 2);
+                paper.style.zIndex = bookData.length - i;
 
                 // Ambil data untuk halaman depan dan belakang dari pasangan ini
-                const frontData = bookData[i];
-                const backData = bookData[i + 1]; // Mungkin kosong jika jumlah halaman ganjil
+                const pageData = bookData[i];
 
-                let frontContent = '';
-                let backContent = '';
+                // GANTI seluruh blok logika `frontContent` dan `backContent` dengan ini:
 
-                // --- Buat Konten untuk Sisi Depan ---
-                if (frontData) {
-                    if (frontData.type === 'cover-front') {
-                        frontContent = `
-                            <div class="front cover-front p-6 flex flex-col justify-center items-center text-center">
-                                <h1 class="font-cover-title text-4xl md:text-6xl">${frontData.content.title}</h1>
-                                <p class="text-2xl md:text-xl mt-4">${frontData.content.recipient}</p>
-                                <p class="mt-8 text-sm md:text-base">${frontData.content.message}</p>
-                            </div>`;
-                    } else {
-                        frontContent = `<div class="front">${createPageContent(frontData)}</div>`;
-                    }
+                let pageHTML = '';
+
+                if (pageData.type === 'cover-front') {
+                    pageHTML = `
+                        <div class="front cover-front p-6 flex flex-col justify-center items-center text-center">
+                            <h1 class="font-cover-title text-4xl md:text-6xl">${pageData.content.title}</h1>
+                            <p class="text-2xl md:text-xl mt-4">${pageData.content.recipient}</p>
+                            <p class="mt-8 text-sm md:text-base">${pageData.content.message}</p>
+                        </div>`;
+                } else if (pageData.type === 'cover-back') {
+                    pageHTML = `
+                        <div class="front cover-back p-6 flex flex-col justify-center items-center text-center text-white">
+                            <h2 class="font-cover-title text-3xl md:text-5xl">${pageData.content.closing}</h2>
+                            <p class="text-xl md:text-3xl mt-4">${pageData.content.sender}</p>
+                        </div>`;
+                } else { // Untuk 'page' biasa
+                    pageHTML = `<div class="front">${createPageContent(pageData)}</div>`;
                 }
 
-                // --- Buat Konten untuk Sisi Belakang ---
-                if (backData) {
-                    if (backData.type === 'cover-back') {
-                        backContent = `
-                            <div class="back cover-back p-6 flex flex-col justify-center items-center text-center text-white">
-                                <h2 class="font-cover-title text-3xl md:text-5xl">${backData.content.closing}</h2>
-                                <p class="text-xl md:text-3xl mt-4">${backData.content.sender}</p>
-                            </div>`;
-                    } else {
-                        backContent = `<div class="back">${createPageContent(backData)}</div>`;
-                    }
-                }
+                // Tambahkan sisi belakang yang kosong agar efek 3D tetap ada
+                pageHTML += '<div class="back"></div>'; 
 
-                paper.innerHTML = frontContent + backContent;
+                paper.innerHTML = pageHTML;
                 book.appendChild(paper);
                 papers.push(paper);
             }
