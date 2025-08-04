@@ -383,7 +383,7 @@
             // Jika ini halaman biasa
             if (data.type === 'page') {
                 return `
-                    <div class="page-content p-4 md:p-8 overflow-y-auto">
+                    <div class="page-content flex-1 min-h-0 p-4 md:p-8 overflow-y-auto">
                         <h2 class="text-xl md:text-2xl font-bold text-gray-800">${data.content.title}</h2>
                         <p class="text-sm text-gray-500 mb-4">${data.content.date}</p>
                         ${
